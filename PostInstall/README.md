@@ -12,14 +12,8 @@ SmartTask script for PostInstall to sanity check the installed policy, if the ch
 }
 ```
 
-Download the policy_sanity_check_script.sh to your management server and run the following commands to add a SmartTask that will use this script.
+**Run the following command on the management server to configure this SmartTask**
+
 ```
-echo '#!/bin/bash' > add-smart-task_policy_sanity_check.sh
-echo '# Adding the policy_sanity_check_script.sh to the script repository on the management server' >> add-smart-task_policy_sanity_check.sh
-echo 'mgmt_cli -r true add-generic-object create com.checkpoint.management.cdm.objects.scripts.Script name "Policy Sanity Check Script" body "'$(base64 policy_sanity_check_script.sh -w 0)'" comments "This script validates that the installed policy allows business critical applications traffic, if needed revert to last good known policy and open a incident ticket in ServiceNow" -f json | jq .uid' >> add-smart-task_policy_sanity_check.sh
-echo '# Adding the smart-task Policy Sanity Check to the management server' >> add-smart-task_policy_sanity_check.sh
-echo "mgmt_cli -r true -f json add smart-task name \"Policy Sanity Check\" color \"sea green\" description \"Run a sanity check script to check if the administrator made a policy change that blocks business critical applications traffic, if needed revert to last good known policy and open a incident ticket in ServiceNow\" enabled true trigger \"After Install Policy\" custom-data '{\n\"smarttask_servicenow_user\": \"my_automation_user_for_service_now\", \n\"smarttask_servicenow_password\": \"my_automation_user_password\", \n\"smarttask_servicenow_host\": \"my_servicenow_instance_fqdn\", \n\n\"short_description\": \"Check Point SmartTask has reverted to last good known policy since critical traffic was blocked due to your policy installation on gateway"\(s\):"\", \n\n\"comments\": \"policy has been automatically reverted to last good known policy by Check Point SmartTasks. This has been done due to failed sanity check of critical business applications traffic. Verify and adjust your policy changes accordingly and install your updated policy.\"\n}' action.run-script.repository-script \"Policy Sanity Check Script\"" >> add-smart-task_policy_sanity_check.sh
-echo '# creating starting point for last known good installed policy' >> add-smart-task_policy_sanity_check.sh
-echo "mgmt_cli -r true --format json show package name standard | jq -r '.\"installation-targets-revision\"[].revision.uid' > /tmp/policy_revision_uid.out" >> add-smart-task_policy_sanity_check.sh
-bash add-smart-task_policy_sanity_check.sh
+curl_cli -kLs https://raw.githubusercontent.com/jimoq/SmartTasks/master/PostInstall/Setup_PostInstall_SmartTask.sh | bash
 ```
